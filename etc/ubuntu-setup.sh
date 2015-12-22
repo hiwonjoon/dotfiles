@@ -28,6 +28,10 @@ install_ppa_tmux() {
 	sudo apt-get install -y tmux
 }
 
+install_python_settings() {
+    sudo apt-get install python-pip python-virtualenv
+    sudo pip install virtualenvwrapper
+}
 
 # entrypoint script
 if [ `uname` != "Linux" ]; then
