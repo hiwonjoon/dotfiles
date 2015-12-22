@@ -38,6 +38,12 @@ install_nvidia_drivers() {
     sudo apt-get update && sudo apt-get install nvidia-352
 }
 
+install_java() {
+    sudo add-apt-repository ppa:webupd8team/java
+    sudo apt-get update
+    sudo apt-get install oracle-java8-installer
+}
+
 # entrypoint script
 if [ `uname` != "Linux" ]; then
 	echo "Run on Linux (not on Mac OS X)"; exit 1
