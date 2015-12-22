@@ -33,6 +33,11 @@ install_python_settings() {
     sudo pip install virtualenvwrapper
 }
 
+install_nvidia_drivers() {
+    sudo add-apt-repository ppa:graphics-drivers/ppa
+    sudo apt-get update && sudo apt-get install nvidia-352
+}
+
 # entrypoint script
 if [ `uname` != "Linux" ]; then
 	echo "Run on Linux (not on Mac OS X)"; exit 1
