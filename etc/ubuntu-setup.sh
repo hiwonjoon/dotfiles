@@ -29,6 +29,7 @@ install_ppa_tmux() {
 }
 
 install_python_settings() {
+    sudo apt-get install python-dev
     sudo apt-get install python-pip python-virtualenv
     sudo pip install virtualenvwrapper
 }
