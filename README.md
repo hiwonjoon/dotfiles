@@ -8,12 +8,17 @@ Personal dotfiles for \*NIX (Mac OS X and Linux) systems.
 ### Clone and Install!
 
 ```bash
-git clone --recursive https://github.com/wookayin/dotfiles.git ~/.dotfiles
+git clone --recursive https://github.com/hiwonjoon/dotfiles.git ~/.dotfiles
 cd ~/.dotfiles && python install.py
+```
+run `tmux`
+```
+<prefix> + I
 ```
 
 The installation script will create symbolic links for the specified dotfiles.
 If the target file already exists (e.g. `~/.vim`), you will have to manually resolve it (delete the old one or just ignore).
+Or, you can force update of it with `--force` option.
 
 ### install.py script
 
