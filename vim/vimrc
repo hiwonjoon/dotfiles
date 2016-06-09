@@ -86,7 +86,11 @@ set statusline=%1*%{winnr()}\ %*%<\ %f\ %h%m%r%=%l,%c%V\ (%P)
 
 " mouse behaviour
 set mouse=nvc
-set ttymouse=xterm2
+if ! has('nvim')
+    " vim only (not in neovim)
+    set ttymouse=xterm2
+endif
+
 
 " encoding and line ending settings
 set encoding=utf-8
@@ -94,7 +98,9 @@ set fileencodings=utf-8,cp949,latin1
 set fileformats=unix,dos
 
 " split and autocomplete settings
-set splitbelow              " preview window at bottom
+set splitbelow                              " preview window at bottom
+set completeopt=menuone,preview,longest     " show preview and pop-up menu
+
 
 " no fucking swap and backup files
 set noswapfile
@@ -126,10 +132,12 @@ if has("autocmd")
 endif
 
 " use strong encryption
-if v:version == 704 && has('patch399')
-    set cryptmethod=blowfish2 " Requires >= 7.4.399
-else
-    set cryptmethod=blowfish
+if ! has('nvim')
+    if v:version == 704 && has('patch399')
+        set cryptmethod=blowfish2 " Requires >= 7.4.399
+    else
+        set cryptmethod=blowfish
+    endif
 endif
 
 """"""""""""""""""""""""""""""""
@@ -147,8 +155,9 @@ sunmap j
 
 nmap <up> gk
 nmap <down> gj
-imap <up> <c-o>gk
-imap <down> <c-o>gj
+
+inoremap <up> <c-\><c-o>gk
+inoremap <down> <c-\><c-o>gj
 
 " Ignore errornous input in Mac OS X
 imap <D-space> <Nop>
@@ -172,6 +181,7 @@ nnoremap <C-tab>   :tabnext<CR>
 " (terminals might capture <Ctrl-t> or something else)
 nnoremap <leader>tn  :tabnext<CR>
 nnoremap <leader>tp  :tabprev<CR>
+nnoremap <leader>tt  :tabnew<CR>
 
 " Handy tab navigations: <Alt-num>
 nnoremap 1 1gt
@@ -204,6 +214,9 @@ function! s:run_make(bang)
 endfunction
 command! -nargs=0 -bang RunMake call s:run_make("<bang>")
 
+" A handy way to set makeprg.
+command! -nargs=1 Makeprg let &g:makeprg="<args>" | echo "makeprg = <args>"
+
 if isdirectory(expand("~/.vim/plugged/vim-dispatch"))
     " use vim-dispatch if exists
 
@@ -213,7 +226,6 @@ if isdirectory(expand("~/.vim/plugged/vim-dispatch"))
 
     " <leader-F5>: run make with visible progress (split window in tmux)
     map  <leader><F5> <ESC>:w<CR>:RunMake!<CR>
-    imap <leader><F5> <ESC>:w<CR>:RunMake!<CR>a
 
     " <F6>: show quickfix window (scroll bottom)
     map  <F6> :Copen<CR>G
@@ -268,7 +280,8 @@ noremap <leader>p "*p
 nnoremap <leader>w :w!<CR>
 
 " <leader>S : Strip trailing whitespaces
-nnoremap <leader>S :call StripTrailingWhitespaces()<CR>
+command! -nargs=0 Strip call StripTrailingWhitespaces()
+nnoremap <leader>S :Strip<CR>
 
 " <leader>df : diffthis
 nnoremap <leader>df :diffthis<CR>
@@ -289,6 +302,9 @@ map  <leader>s[ ysiw[
 map  <leader>s] ysiw]
 map  <leader>s{ ysiw{
 map  <leader>s} ysiw}
+
+" Zoom Tmux
+map <leader>z :silent exec "!tmux resize-pane -Z"<CR>
 
 " }}}
 
@@ -339,6 +355,8 @@ filetype indent on
 " filetype detections
 au BufRead,BufNewFile /etc/nginx/* if &ft == '' | setfiletype nginx | endif
 
+autocmd FileType git setlocal foldlevel=1
+
 " remove trailing whitespaces on save
 fun! StripTrailingWhitespaces()
     let l = line(".")
@@ -347,11 +365,12 @@ fun! StripTrailingWhitespaces()
     call cursor(l, c)
 endfun
 
-autocmd FileType c,cpp,java,javascript,html,ruby,python,pandoc,tex
+autocmd FileType c,cpp,java,javascript,html,ruby,python,pandoc
     \ autocmd BufWritePre <buffer> :call StripTrailingWhitespaces()
 
 " highlight trailing whitespaces
 highlight ExtraWhitespace ctermbg=red guibg=red
+autocmd FileType GV highlight clear ExtraWhitespace
 
 match ExtraWhitespace /\s\+$/
 autocmd BufWinEnter * match ExtraWhitespace /\s\+$/
@@ -426,7 +445,7 @@ let g:startify_skiplist = [
 
 " Airline {{{
     " use airline, with powerline-ish theme
-    let g:airline_theme='powerlineish'
+    let g:airline_theme='bubblegum'
     let g:airline_powerline_fonts=1
 
     " enable tabline feature
@@ -440,11 +459,32 @@ let g:startify_skiplist = [
 " }}}
 
 " FZF {{{
+
+" Inside vim, set environment variable FZF_DEFAULT_COMMAND
+" so that it can list the files by 'git ls-files' or 'ag'.
+if executable("ag")
+    let $FZF_DEFAULT_COMMAND = '(git ls-files ":/" || ag -l -g "") | LC_COLLATE=C sort | uniq  2> /dev/null'
+endif
+
 " abbrev :F for :FZF
 cnoreabbrev F FZF
+
+" Invoke FZF Using Ctrl-P
+nmap <C-P> :FZF<CR>
+
+
+" Leader key mappings for vim-fzf commands
+
+" List all open buffers
+nnoremap <leader>FB :Buffers<CR>
+" Tags in the current buffer (see tagbar)
+nnoremap <leader>FT :BTags<CR>
+" Git commits
+nnoremap <leader>FG :Commits<CR>
+
 " }}}
 
-" CtrlP.vim {{{
+" CtrlP.vim (deprecated) {{{
 let g:ctrlp_custom_ignore = '\v[\/](node_modules|target|dist|bin)|(\.(ico|git|svn))$'
 
 " Default to filename searches (switch: C-D)
@@ -452,15 +492,15 @@ let g:ctrlp_by_filename = 1
 
 " }}}
 
-" CtrlP-Z {{{
-let g:ctrlp_z_nerdtree = 1
-let g:ctrlp_extensions = ['Z', 'F']
+" SuperTab {{{
 
-nnoremap <leader>Z :CtrlPZ<CR>
-nnoremap <leader>F :CtrlPF<CR>
+" Use 'omnicomplete' as the default completion type.
+" It may fallback to default keyword completion (<C-P>).
+let g:SuperTabDefaultCompletionType = "<C-X><C-O>"
 
-command! Z CtrlPZ
-"command! F CtrlPF
+" sometimes we may want to insert tabs or spaces for indentation.
+" no tab completion at the start of line or after whitespace.
+let g:SuperTabNoCompleteAfter = ['^', '\s']
 
 " }}}
 
@@ -482,6 +522,13 @@ let NERDTreeIgnore = ['\.pyc$', '\.class$', '\.o$']
 
 " }}}
 
+" Voom {{{
+
+let g:voom_ft_modes = {'pandoc': 'markdown', 'tex': 'latex'}
+
+nnoremap <leader>V :VoomToggle<CR>
+
+" }}}
 
 " Easymotion {{{
 
@@ -495,6 +542,15 @@ nmap <leader>f <Plug>(easymotion-s)
 " Jump to first match, by Enter or Space
 let g:EasyMotion_enter_jump_first = 1
 let g:EasyMotion_space_jump_first = 1
+
+" }}}
+
+" vim-easy-align {{{
+
+" Start interactive EasyAlign in visual mode (e.g. vipga)
+xmap ga <Plug>(EasyAlign)
+" Start interactive EasyAlign for a motion/text object (e.g. gaip)
+nmap ga <Plug>(EasyAlign)
 
 " }}}
 
@@ -520,6 +576,13 @@ let g:pandoc#spell#enabled = 0
 
 " python {{{
 
+" heavenshell/vim-pydocstring
+" Change default keymapping to <C-_> (default is <C-l>)
+nmap <silent> <C-_> <Plug>(pydocstring)
+
+" :Lint shortcut for :PymodeLint
+command! -nargs=0 Lint PymodeLint
+
 " disable code folding by default
 let g:pymode_folding = 0
 
@@ -534,20 +597,39 @@ let g:pymode_run = 0
 " one might need to run 'pip install ipdb'
 let g:pymode_breakpoint_cmd = 'import ipdb; ipdb.set_trace()'
 
+" Check code on every save (not on the fly)
+let g:pymode_lint_on_write = 1
+let g:pymode_lint_unmodified = 1
+
 " Do NOT open quickfix window when any pymode_lint errors have been found
 let g:pymode_lint_cwindow = 0
 
 " Skip some errors and warnings
+"  E401 : multiple imports on one line
 "  E501 : line too long
-let g:pymode_lint_ignore = "E501"
+let g:pymode_lint_ignore = "E401,E501"
 
 " Make jedi's completeopt not to include 'longest',
 " to prevent underscore prefix auto-completion (e.g. self.__)
 " @see jedi-vim issues #429
 let g:jedi#auto_vim_configuration = 0
 
+" Do not automatically add the 'import' statement for 'from ...'
+let g:jedi#smart_auto_mappings = 0
+
+" Turn off call signatures temporarily, due to an annoying bug
+" @see https://github.com/davidhalter/jedi-vim/issues/257
+let g:jedi#show_call_signatures = 0
+
+" make jedi-vim open a new tab instead of switching the current buffer,
+" when goto (e.g. goto definition) is performed
+let g:jedi#use_tabs_not_buffers = 1
+
 " }}}
 
+" LaTeX {{{
+let g:LatexBox_Folding = 1
+" }}}
 
 " fugitive {{{
 
@@ -568,7 +650,9 @@ nnoremap <leader>G :GundoToggle<CR>
 " tagbar key mappings
 nnoremap <leader>T :TagbarToggle<CR>
 
-
+" deoplete.nvim {{{
+let g:deoplete#enable_at_startup = 1
+" }}}
 
 """""""""""""""""""""""""""
 " Extra Settings

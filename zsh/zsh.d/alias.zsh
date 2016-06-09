@@ -8,6 +8,12 @@ alias rm='nocorrect rm -iv'
 # Screen
 alias scr='screen -rD'
 
+# v: Neovim (if exists) or Vim
+if command -v nvim 2>&1 >/dev/null; then
+    alias v='nvim'
+else
+    alias v='vim'
+fi
 
 # Tmux ========================================= {{{
 
@@ -35,6 +41,13 @@ alias gds='gd --staged --no-prefix'
 alias gs='git status'
 alias gsu='gs -u'
 
+# using the vim plugin 'GV'!
+function _vim_gv {
+    vim -c ":GV $1"
+}
+alias gv='_vim_gv'
+alias gva='gv --all'
+
 # }}}
 
 
@@ -43,11 +56,15 @@ alias gsu='gs -u'
 # virtualenv
 alias wo='workon'
 
+# override prezto's default
+# use 'py' command from pythonpy
+unalias py
+
 # ipython
 alias ipy='ipython'
 alias ipypdb='ipy -c "%pdb" -i'   # with auto pdb calling turned ON
 
-alias ipynb='ipython notebook'
+alias ipynb='jupyter notebook'
 alias ipynb0='ipynb --ip=0.0.0.0'
 
 # pip install nose, rednose
@@ -71,7 +88,15 @@ alias awklast="awk '{print \$\(NF\)}'"
 
 # Etc ======================================= {{{
 
+# default watch options
+alias watch='watch --color -n1'
+
 # nvidia-smi every 1 sec
 alias smi='watch -n1 nvidia-smi'
+
+function usegpu {
+    export CUDA_VISIBLE_DEVICES=$1
+}
+
 
 # }}}

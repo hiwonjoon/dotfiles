@@ -44,8 +44,8 @@ typeset -gU cdpath fpath mailpath path
 # Set the list of directories that Zsh searches for programs.
 path=(
   $HOME/.local/bin
-  /usr/local/{bin,sbin}
   $path
+  /usr/local/{bin,sbin}
 )
 
 #
@@ -83,9 +83,15 @@ fpath=(${ZDOTDIR:-$HOME}/.zsh/prezto-themes $fpath)
 
 #
 # Python - Virtualenv, etc.
+#
 
-# use system python for virtualenv commands.
-export VIRTUALENVWRAPPER_PYTHON='/usr/bin/python'
+if [[ "$(uname)" == "Darwin" ]]; then
+    # Mac OS X: use python shipped by Homebrew for virtualenv.
+    export VIRTUALENVWRAPPER_PYTHON='/usr/local/bin/python'
+else
+    # use default system python for virtualenv.
+    export VIRTUALENVWRAPPER_PYTHON='/usr/bin/python'
+fi
 
 # ensure that all new virtual environments are isolated from the system site-packages.
 export VIRTUALENVWRAPPER_VIRTUALENV_ARGS='--no-site-packages'
